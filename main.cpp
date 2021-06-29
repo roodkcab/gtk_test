@@ -43,31 +43,24 @@ void CDrawingArea::draw_text(const Cairo::RefPtr<Cairo::Context>& cr, int width,
 
 bool CDrawingArea::on_draw(const Cairo::RefPtr<Cairo::Context>& cr)
 {
-	int width = this->get_width();
-	int height = this->get_height();
-	int xc, yc;
-	xc = width / 2;
-	yc = height / 2;
-	cr->move_to(10, 10);
-	cr->line_to(200, 10);
-	cr->line_to(200, 100);
-	cr->line_to(10, 100);
-	cr->line_to(10, 10);
-	cr->set_source_rgba(0.8, 0, 0, 1);
-	cr->fill_preserve();
-	cr->set_line_width(10);
-	cr->set_source_rgba(0.8, 0.8, 0, 1);
-	cr->stroke();
+	Cairo::RefPtr<Cairo::LinearGradient> linearGradient = Cairo::LinearGradient::create(0, 0, 400, 0);
+	linearGradient->add_color_stop_rgba(0.0, 1.00, 0.00, 0.00, 1.0);
+	linearGradient->add_color_stop_rgba(1.0, 0.00, 1.00, 0.00, 1.0);
+	Cairo::Matrix m = cr->get_matrix();
+	m.rotate(3 * M_PI / 2);
+	m.translate(400, 0);
+	linearGradient->set_matrix(m);
+	cr->set_source(linearGradient);
+	cr->rectangle(0, 0, 400, 400);
+	cr->fill();
 
-	cr->arc(xc, yc, width/2, -3.14, 3.14);
-	cr->stroke();
 }
 
 int main(int argc, char *argv[])
 {
 	auto app = Gtk::Application::create(argc, argv, "org.gtkmm.examples.base");
 	Gtk::Window window;
-	window.set_default_size(300, 300);
+	window.set_default_size(400, 400);
 
 	CDrawingArea area;
 	window.add(area);
