@@ -31,8 +31,9 @@ void CDrawingArea::draw_text(const Cairo::RefPtr<Cairo::Context>& cr, int width,
 	//font.set_stretch(Pango::STRETCH_NORMAL);
 	font.set_size(30 * PANGO_SCALE);
 
-	auto layout = create_pango_layout("Hi there!");
+	auto layout = create_pango_layout("测试一下中文怎么样测试一下中文怎么样测试一下中文怎么样测试一下中文怎么样");
 	layout->set_font_description(font);
+	layout->set_width(static_cast<int>(width * Pango::SCALE));
 
 	int text_width;
 	int text_height;
@@ -51,9 +52,9 @@ bool CDrawingArea::on_draw(const Cairo::RefPtr<Cairo::Context>& cr)
 	m.translate(400, 0);
 	linearGradient->set_matrix(m);
 	cr->set_source(linearGradient);
-	cr->rectangle(0, 0, 400, 400);
+	cr->rectangle(0, 0, 0, 0);
+	draw_text(cr, this->get_width(), this->get_height());
 	cr->fill();
-
 }
 
 int main(int argc, char *argv[])
