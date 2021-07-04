@@ -4,19 +4,25 @@
 
 using namespace Gtk;
 
+static Cairo::RefPtr<Cairo::Surface> s;
+
 class CDrawingArea : public Gtk::DrawingArea
 {
 public:
 	CDrawingArea();
 	virtual ~CDrawingArea();
+
 protected:
 	bool on_draw(const Cairo::RefPtr<Cairo::Context>& cr);
+	bool on_configure(GdkEventConfigure* event);
+	bool offscreen_render();
 	void draw_text(const Cairo::RefPtr<Cairo::Context>& cr, int width, int height);
 };
 
 CDrawingArea::CDrawingArea()
 {
 	signal_draw().connect(sigc::mem_fun(*this, &CDrawingArea::on_draw));
+	signal_configure_event().connect(sigc::mem_fun(*this, &CDrawingArea::on_configure));
 }
 
 CDrawingArea::~CDrawingArea()
@@ -42,19 +48,36 @@ void CDrawingArea::draw_text(const Cairo::RefPtr<Cairo::Context>& cr, int width,
 	layout->show_in_cairo_context(cr);
 }
 
+bool CDrawingArea::on_configure(GdkEventConfigure* event)
+{
+	s = this->get_window()->create_similar_surface(static_cast<Cairo::Content>(CAIRO_CONTENT_COLOR), this->get_width(), this->get_height());
+	this->offscreen_render();
+}
+
 bool CDrawingArea::on_draw(const Cairo::RefPtr<Cairo::Context>& cr)
 {
-	Cairo::RefPtr<Cairo::LinearGradient> linearGradient = Cairo::LinearGradient::create(0, 0, 400, 0);
-	linearGradient->add_color_stop_rgba(0.0, 1.00, 0.00, 0.00, 1.0);
-	linearGradient->add_color_stop_rgba(1.0, 0.00, 1.00, 0.00, 1.0);
-	Cairo::Matrix m = cr->get_matrix();
-	m.rotate(3 * M_PI / 2);
-	m.translate(400, 0);
-	linearGradient->set_matrix(m);
-	cr->set_source(linearGradient);
-	cr->rectangle(0, 0, 0, 0);
-	draw_text(cr, this->get_width(), this->get_height());
-	cr->fill();
+	cr->set_source(s, 0, 0);
+	cr->paint();
+}
+
+bool CDrawingArea::offscreen_render()
+{
+	if (s && s->get_status() == CAIRO_STATUS_SUCCESS) {
+		Cairo::RefPtr<Cairo::Context> cr = Cairo::Context::create(s);
+		Cairo::RefPtr<Cairo::LinearGradient> linearGradient = Cairo::LinearGradient::create(0, 0, 400, 0);
+		linearGradient->add_color_stop_rgba(0.0, 1.00, 0.00, 0.00, 1.0);
+		linearGradient->add_color_stop_rgba(1.0, 0.00, 1.00, 0.00, 1.0);
+		Cairo::Matrix m = cr->get_matrix();
+		m.rotate(3 * M_PI / 2);
+		m.translate(400, 0);
+		linearGradient->set_matrix(m);
+		cr->set_source(linearGradient);
+		cr->rectangle(0, 0, 0, 0);
+		draw_text(cr, this->get_width(), this->get_height());
+		cr->fill();
+		this->queue_draw();
+	}
+	return true;
 }
 
 int main(int argc, char *argv[])
